@@ -7,17 +7,21 @@ void framebuffer_size_callback(GLFWwindow* window, int width, int height);
 void processInput(GLFWwindow* window);
 
 const char* vertexShaderSource = "#version 330 core\n"
-	"layout(location = 0) in vec3 aPos;\n"
+	"layout (location = 0) in vec3 aPos;\n"
+	"layout (location = 1) in vec3 aColor;\n"
+	"out vec3 ourColor;\n"
 	"void main()\n"
 	"{\n"
-	"	gl_Position = vec4(aPos.x, aPos.y, aPos.z, 1.0);\n"
+	"	gl_Position = vec4(aPos, 1.0);\n"
+	"	ourColor = aColor;\n"	// Set ourColor to the input color from the vertex data
 	"}\0";
 
 const char* fragmentShaderSource = "#version 330 core\n"
 	"out vec4 FragColor;\n"
+	"in vec3 ourColor;\n"
 	"void main()\n"
 	"{\n"
-	"	FragColor = vec4(1.0f, 0.5f, 0.2f, 1.0f);\n"
+	"	FragColor = vec4(ourColor, 1.0f);\n"
 	"}\n\0";
 
 int main() 
@@ -92,19 +96,21 @@ int main()
 	glDeleteShader(fragmentShader);
 
 	// Triangle vertices
-	//float vertices[] = {
-	//	-0.5f, -0.5f, 0.0f,	// Left
-	//	 0.5f, -0.5f, 0.0f,	// Right
-	//	 0.0f,  0.5f, 0.0f	// Top
-	//};
+	float vertices[] = {
+		// Positiions		// Colors
+		-0.5f, -0.5f, 0.0f,	 1.0f, 0.0f, 0.0f,		// Bottom right
+		 0.5f, -0.5f, 0.0f,	 0.0f, 1.0f, 0.0f,		// Bottom left
+		 0.0f,  0.5f, 0.0f,  0.0f, 0.0f, 1.0f		// Top
+	};
 
 	// Rectangle vertices
-	float vertices[] = {
-	 0.5f,  0.5f, 0.0f,  // top right
-	 0.5f, -0.5f, 0.0f,  // bottom right
-	-0.5f, -0.5f, 0.0f,  // bottom left
-	-0.5f,  0.5f, 0.0f   // top left 
-	};
+	//float vertices[] = {
+	// 0.5f,  0.5f, 0.0f,  // top right
+	// 0.5f, -0.5f, 0.0f,  // bottom right
+	//-0.5f, -0.5f, 0.0f,  // bottom left
+	//-0.5f,  0.5f, 0.0f   // top left 
+	//};
+
 	unsigned int indices[] = {  // note that we start from 0!
 		0, 1, 3,   // first triangle
 		1, 2, 3    // second triangle
@@ -125,9 +131,13 @@ int main()
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
 	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 
-	// Set the vertex attribute pointers
-	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
+	// Position attribute
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
+
+	// Color attribute
+	glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), (void*)(3* sizeof(float)));
+	glEnableVertexAttribArray(1);
 
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -142,11 +152,19 @@ int main()
 
 		// Draw triangle
 		glUseProgram(shaderProgram);
+
+		// Update shader uniform
+		float timeValue = glfwGetTime();
+		float greenValue = sin(timeValue) / 2.0f + 0.5f;
+		int vertexColorLocation = glGetUniformLocation(shaderProgram, "ourColor");
+		glUniform4f(vertexColorLocation, 0.0f, greenValue, 0.0f, 1.0f);
+
+		// Remder triangle
 		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 3);
+		//glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
 
-		//glDrawArrays(GL_TRIANGLES, 0, 3);
-		glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, 0);
-
+		// Swap buffers and poll IO events
 		glfwSwapBuffers(window);
 		glfwPollEvents();			// Checks if inputs like keyboard / mouse are triggered
 	}
