@@ -74,7 +74,7 @@ int main()
 
 	// Texture coordinate attribute
 	glVertexAttribPointer(2, 2, GL_FLOAT, GL_FALSE, 8 * sizeof(float), (void*)(6 * sizeof(float)));
-	glEnableVertexAttribArray(1);
+	glEnableVertexAttribArray(2);
 		
 	// Load and create texture
 	unsigned int texture;
