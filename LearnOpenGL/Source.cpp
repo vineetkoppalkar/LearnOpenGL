@@ -199,7 +199,12 @@ int main()
 		ourShader.use();
 
 		glm::mat4 view = glm::mat4(1.0f);
-		view = glm::translate(view, glm::vec3(0.0f, 0.0f, -3.0f));
+		float radius = 10.0f;
+		float camX = sin(glfwGetTime()) * radius;
+		float camZ = cos(glfwGetTime()) * radius;
+		view = glm::lookAt(glm::vec3(camX, 0.0f, camZ),		// camera position
+						   glm::vec3(0.0f, 0.0f, 0.0f),		// target
+						   glm::vec3(0.0f, 1.0f, 0.0f));	// up vector
 		ourShader.setMat4("view", view);
 		
 		glm::mat4 projection = glm::mat4(1.0f);
