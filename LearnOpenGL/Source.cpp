@@ -26,6 +26,9 @@ bool firstMouse = true;
 float deltaTime = 0.0f;		// time between current frame and last frame
 float lastFrame = 0.0f;		// time of last frame
 
+// Lighting position
+glm::vec3 lightPos(1.2f, 1.0f, 2.0f);
+
 int main() 
 {
 	glfwInit();
@@ -56,6 +59,7 @@ int main()
 
 	// Build and compile our shader program
 	Shader ourShader("./shader.vs", "./shader.fs");
+	Shader lampShader("./lamp.vs", "./lamp.fs");
 
 	// cube vertices data
 	float vertices[] = {
@@ -196,6 +200,16 @@ int main()
 	glUniform1i(glGetUniformLocation(ourShader.ID, "texture1"), 0);
 	ourShader.setInt("texture2", 1);
 
+	// Light vertex attribute object
+	unsigned int lightVAO;
+	glGenVertexArrays(1, &lightVAO);
+	glBindVertexArray(lightVAO);
+
+	// Reuse VBO of cube object for lamp
+	glBindBuffer(GL_ARRAY_BUFFER, VBO);
+	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(float), (void*)0);
+	glEnableVertexAttribArray(0);
+
 	glEnable(GL_DEPTH_TEST);
 
 	// Render loop
@@ -210,7 +224,7 @@ int main()
 		processInput(window);
 
 		// Rendering commands
-		glClearColor(0.2f, 0.3f, 0.3f, 1.0f);
+		glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
 		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 		
 		// Bind texture on corresponding texture units
@@ -221,6 +235,10 @@ int main()
 
 		// Render container
 		ourShader.use();
+
+		// Set object and light color in fragment shader
+		ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
+		ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 		
 		// Camera / view transform
 		glm::mat4 view = camera.GetViewMatrix();
@@ -231,18 +249,28 @@ int main()
 		projection = glm::perspective(glm::radians(camera.Zoom), 800.0f / 600.0f, 0.1f, 100.0f);
 		ourShader.setMat4("projection", projection);
 
-		glBindVertexArray(VAO);
-		for (unsigned int i = 0; i < 10; i++)
-		{
-			// World / Model transform
-			glm::mat4 model = glm::mat4(1.0f);
-			model = glm::translate(model, cubePositions[i]);
-			float angle = 20.0f * i;
-			model = glm::rotate(model, glm::radians(angle), glm::vec3(1.0f, 0.3f, 0.5f));
-			ourShader.setMat4("model", model);
+		// World / Model transform
+		glm::mat4 model = glm::mat4(1.0f);
+		ourShader.setMat4("model", model);
 
-			glDrawArrays(GL_TRIANGLES, 0, 36);
-		}
+		// Render the cube
+		glBindVertexArray(VAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		// Draw lamp object
+		lampShader.use();
+		lampShader.setMat4("projection", projection);
+		lampShader.setMat4("view", view);
+
+		// Position and scale lamp object
+		model = glm::mat4(1.0f);
+		model = glm::translate(model, lightPos);
+		model = glm::scale(model, glm::vec3(0.2f));
+		lampShader.setMat4("model", model);
+
+		// Render lamp object
+		glBindVertexArray(lightVAO);
+		glDrawArrays(GL_TRIANGLES, 0, 36);
 
 		// Swap buffers and poll IO events
 		glfwSwapBuffers(window);
