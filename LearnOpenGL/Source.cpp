@@ -170,6 +170,7 @@ int main()
 		ourShader.setVec3("objectColor", 1.0f, 0.5f, 0.31f);
 		ourShader.setVec3("lightColor", 1.0f, 1.0f, 1.0f);
 		ourShader.setVec3("lightPos", lightPos);
+		ourShader.setVec3("viewPos", camera.Position);
 
 		// view/projection transformations
 		glm::mat4 projection = glm::perspective(glm::radians(camera.Zoom),  800.0f/600.0f, 0.1f, 100.0f);
@@ -179,11 +180,15 @@ int main()
 
 		// world transformation
 		glm::mat4 model = glm::mat4(1.0f);
+		//model = glm::translate(model, 5 * glm::sin(currentFrame) * glm::vec3(1.0f, 0.0f, 0.0f));
 		ourShader.setMat4("model", model);
 
 		// render the cube
 		glBindVertexArray(cubeVAO);
 		glDrawArrays(GL_TRIANGLES, 0, 36);
+
+		
+		//lightPos = glm::vec3(1.2f, 1.0f, 2.0f) + 5 * glm::sin(currentFrame) * glm::vec3(1.0f, 0.0f, 0.0f);
 
 
 		// also draw the lamp object
@@ -192,6 +197,7 @@ int main()
 		lampShader.setMat4("view", view);
 		model = glm::mat4(1.0f);
 		model = glm::translate(model, lightPos);
+		//model = glm::translate (model,  5 * glm::sin(currentFrame) *  glm::vec3(1.0f, 0.0f, 0.0f));
 		model = glm::scale(model, glm::vec3(0.2f)); // a smaller cube
 		lampShader.setMat4("model", model);
 
